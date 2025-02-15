@@ -6,6 +6,8 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+// Use esse middleware apenas se for absolutamente necessário.
+
 class JsonOnlyForApiRoutes
 {
   /**
