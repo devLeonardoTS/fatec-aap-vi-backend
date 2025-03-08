@@ -16,6 +16,7 @@ Route::prefix('group-example')->name('group-example.')->group(function () {
   Route::get('/list', [ExampleController::class, 'list'])->name('list');
 
 });
+Route::get('/exemplo',[ExampleController::class,'test'])->name('test');
 
 // Exemplo de rotas agrupadas, com verificação de autenticação aplicada e separada em um arquivo específico (recomendado)
 require __DIR__ . '/app/auth.php';
