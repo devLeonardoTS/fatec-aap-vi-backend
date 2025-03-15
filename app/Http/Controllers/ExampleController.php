@@ -23,10 +23,24 @@ class ExampleController extends Controller
   return response()->json(data:
   [
     'teste' => 'Hello world',
-    
+
     'message' => $messages
   ]);
 }
+
+public function create(){
+ 
+}
+
+public function show(){
+
+}
+
+
+public function store(Request $request){
+
+}
+
 
 
   public function welcome()
