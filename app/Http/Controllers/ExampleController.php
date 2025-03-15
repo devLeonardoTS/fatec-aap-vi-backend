@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Message;
 
 class ExampleController extends Controller
 {
@@ -14,6 +15,33 @@ class ExampleController extends Controller
       'group_example_url' => route('group-example.welcome')
     ]);
   }
+
+  public function test()
+{
+  $messages = Message::all();
+ 
+  return response()->json(data:
+  [
+    'teste' => 'Hello world',
+
+    'message' => $messages
+  ]);
+}
+
+public function create(){
+ 
+}
+
+public function show(){
+
+}
+
+
+public function store(Request $request){
+
+}
+
+
 
   public function welcome()
   {
