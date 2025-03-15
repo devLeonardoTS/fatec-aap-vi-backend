@@ -18,5 +18,7 @@ Route::prefix('group-example')->name('group-example.')->group(function () {
 });
 Route::get('/exemplo',[ExampleController::class,'test'])->name('test');
 
-// Exemplo de rotas agrupadas, com verificação de autenticação aplicada e separada em um arquivo específico (recomendado)
+// Rotas de autenticação separada em um arquivo específico (recomendado)
 require __DIR__ . '/app/auth.php';
+
+require __DIR__ . '/app/messages.php';

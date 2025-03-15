@@ -1,8 +1,10 @@
 <?php
 
+use App\Middlewares\NotFoundAsJson;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
   ->withRouting(
@@ -17,5 +19,15 @@ return Application::configure(basePath: dirname(__DIR__))
 
   })
   ->withExceptions(function (Exceptions $exceptions) {
-    //
+
+    // Handle "Not Found" routes on api routes.
+    $exceptions->render(function (NotFoundHttpException $e, Illuminate\Http\Request $request) {
+      if ($request->is('api/*')) {
+        return response()->json([
+          'message' => 'Resource not found.',
+          'error' => 'NOT_FOUND',
+        ], 404);
+      }
+    });
+
   })->create();
