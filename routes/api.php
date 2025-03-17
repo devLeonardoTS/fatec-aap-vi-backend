@@ -16,9 +16,11 @@ Route::prefix('group-example')->name('group-example.')->group(function () {
   Route::get('/list', [ExampleController::class, 'list'])->name('list');
 
 });
-Route::get('/exemplo',[ExampleController::class,'test'])->name('test');
+Route::get('/exemplo', [ExampleController::class, 'test'])->name('test');
 
 // Rotas de autenticação separada em um arquivo específico (recomendado)
 require __DIR__ . '/app/auth.php';
 
 require __DIR__ . '/app/messages.php';
+
+require __DIR__ . '/app/queues.php';
