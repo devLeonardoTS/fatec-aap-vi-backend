@@ -12,7 +12,8 @@ return new class extends Migration {
   {
 
     Schema::table('users', function (Blueprint $table) {
-      $table->string('role')->default('user');
+      $table->dropColumn('name');
+      $table->string('role')->default('Usuário');
       $table->boolean('is_active')->default(true);
     });
 
@@ -36,7 +37,6 @@ return new class extends Migration {
 
     Schema::create('addresses', function (Blueprint $table) {
       $table->id();
-      $table->string('full_name')->nullable();
 
       $table->string('phone_number')->nullable();
 
@@ -44,6 +44,7 @@ return new class extends Migration {
       $table->string('city')->nullable();
       $table->string('state')->nullable();
       $table->string("identifier")->nullable();
+      $table->string("reference")->nullable();
       $table->string('zip_code')->nullable();
       $table->string('country')->nullable();
 
