@@ -31,7 +31,7 @@ class UsersController extends Controller
     \DB::beginTransaction();
 
     try {
-      $user = User::create([
+      $user = User::factory()->create([
         'email' => $request->email,
         'password' => $request->password,
       ]);
@@ -47,12 +47,13 @@ class UsersController extends Controller
 
       return response()->json([
         'message' => 'Erro ao criar o usuário. Ocorreu um erro na operação do banco de dados.',
+        'error' => $e->getMessage(),
       ], 500);
 
     }
 
     return response()->json([
-      'data' => $user,
+      'data' => $user->load('profile'),
       'message' => 'Usuário criado com sucesso.',
     ], 201);
   }

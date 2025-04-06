@@ -59,4 +59,10 @@ class User extends Authenticatable
   {
     return $this->hasMany(Address::class);
   }
+
+  // A user can have many devices
+  public function devices()
+  {
+    return $this->hasMany(Device::class);
+  }
 }

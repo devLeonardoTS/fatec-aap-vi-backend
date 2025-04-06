@@ -66,6 +66,18 @@ return new class extends Migration {
       $table->timestamps();
     });
 
+    Schema::create('devices', function (Blueprint $table) {
+      $table->id();
+      $table->string('token');
+
+      $table->string('name')->nullable();
+      $table->string('description')->nullable();
+
+      $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
+
+      $table->timestamps();
+    });
+
   }
 
   /**
