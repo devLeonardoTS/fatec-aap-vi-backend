@@ -4,10 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class QueueEvent extends Model
+class Command extends Model
 {
 
-  protected $table = 'queue_events';
+  protected $table = 'commands';
 
   protected $fillable = [
     'device',

@@ -45,4 +45,24 @@ class User extends Authenticatable
       'password' => 'hashed',
     ];
   }
+
+  // Relationships
+
+  // A user can have one profile
+  public function profile()
+  {
+    return $this->hasOne(Profile::class);
+  }
+
+  // A user can have many addresses
+  public function addresses()
+  {
+    return $this->hasMany(Address::class);
+  }
+
+  // A user can have many devices
+  public function devices()
+  {
+    return $this->hasMany(Device::class);
+  }
 }

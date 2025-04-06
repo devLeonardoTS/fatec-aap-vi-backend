@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Message;
-use App\Models\QueueEvent;
+use App\Models\Command;
 use Illuminate\Http\Request;
+
+// Todo: Update this controller from Queues to Commands.
 
 class QueuesController extends Controller
 {
@@ -13,7 +15,7 @@ class QueuesController extends Controller
 
     $device = $request->query('device');
 
-    $event = QueueEvent::where('device', $device)->first();
+    $event = Command::where('device', $device)->first();
 
     if (!$event) {
       return response()->json([
@@ -56,7 +58,7 @@ class QueuesController extends Controller
   public function dispatchDeviceCommand(Request $request)
   {
 
-    $exists = QueueEvent::where('command', $request->input('command'))->exists();
+    $exists = Command::where('command', $request->input('command'))->exists();
 
     if ($exists) {
       return response()->json([
@@ -69,7 +71,7 @@ class QueuesController extends Controller
       'command',
     ]);
 
-    $event = QueueEvent::create($fields);
+    $event = Command::create($fields);
 
     return response()->json([
       'data' => [
