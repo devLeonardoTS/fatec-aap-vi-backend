@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Constants\UserRoles;
 use App\Services\NanoidGenerator;
 use Illuminate\Database\Eloquent\Model;
 
@@ -10,6 +11,9 @@ class Device extends Model
   protected $fillable = [
     'user_id',
     'is_active',
+    'token',
+    'name',
+    'description',
   ];
 
   protected static function booted()
@@ -34,6 +38,17 @@ class Device extends Model
 
   public function scopeFilter($query, array $filters)
   {
+
+    // Role based filtering
+    if (auth()?->user()?->role === UserRoles::ADMIN) {
+      // Show all devices for admin users
+      return $query;
+    } else {
+      // Show only devices that belong to the user
+      return $query->where('user_id', auth()?->id());
+    }
+
+
     // Strict boolean and direct filters on `casts` or `fillable` fields
     foreach ($filters as $key => $value) {
       if (array_key_exists($key, $this->casts) && $this->casts[$key] === 'boolean') {

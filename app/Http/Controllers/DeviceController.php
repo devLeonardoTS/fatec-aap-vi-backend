@@ -32,7 +32,7 @@ class DeviceController extends Controller
   {
 
     return response()->json([
-      'data' => $device,
+      'data' => $device->load(['user']),
       'message' => 'Dispositivo encontrado.',
     ]);
 
@@ -40,7 +40,27 @@ class DeviceController extends Controller
 
   public function store(Request $request)
   {
-    $device = Device::create();
+    \DB::beginTransaction();
+
+    try {
+      $device = Device::create();
+
+      if (auth()?->user()) {
+        $device->user()->associate(auth()->user());
+        $device->save();
+      }
+
+      \DB::commit();
+    } catch (\Exception $e) {
+      \DB::rollBack();
+
+      \Log::error($e->getMessage());
+
+      return response()->json([
+        'message' => 'Erro ao criar o dispositivo. Ocorreu um erro na operação do banco de dados.',
+        'error' => $e->getMessage(),
+      ], Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
 
     return response()->json([
       'data' => $device,
