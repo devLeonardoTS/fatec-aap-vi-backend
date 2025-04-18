@@ -65,4 +65,28 @@ class User extends Authenticatable
   {
     return $this->hasMany(Device::class);
   }
+
+  public function devices_commands()
+  {
+    return $this->hasManyThrough(
+      DeviceCommand::class,
+      Device::class,
+      'user_id', // Foreign key on devices table...
+      'device_id', // Foreign key on device_commands table...
+      'id', // Local key on users table...
+      'id'  // Local key on devices table...
+    );
+  }
+
+  public function devices_metrics()
+  {
+    return $this->hasManyThrough(
+      DeviceMetrics::class,
+      Device::class,
+      'user_id',         // Foreign key on Device table...
+      'device_id',       // Foreign key on DeviceMetrics table...
+      'id',              // Local key on User table...
+      'id'               // Local key on Device table...
+    );
+  }
 }

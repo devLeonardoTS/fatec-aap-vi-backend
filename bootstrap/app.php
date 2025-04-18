@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\LogHttpRequests;
+use App\Http\Middleware\VerboseRequestLogger;
 use App\Middlewares\NotFoundAsJson;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -15,7 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
   )
   ->withMiddleware(function (Middleware $middleware) {
 
-    $middleware->statefulApi();
+    $middleware->append(\App\Http\Middleware\ForceJsonResponse::class);
 
     $middleware->validateCsrfTokens(except: [
       'api/*',
@@ -25,13 +27,13 @@ return Application::configure(basePath: dirname(__DIR__))
   ->withExceptions(function (Exceptions $exceptions) {
 
     // Handle "Not Found" routes on api routes.
-    $exceptions->render(function (NotFoundHttpException $e, Illuminate\Http\Request $request) {
-      if ($request->is('api/*')) {
-        return response()->json([
-          'message' => 'Resource not found.',
-          'error' => 'NOT_FOUND',
-        ], 404);
-      }
-    });
-
+    // $exceptions->render(function (NotFoundHttpException $e, Illuminate\Http\Request $request) {
+    //   if ($request->is('api/*')) {
+    //     return response()->json([
+    //       'message' => 'Resource not found.',
+    //       'error' => 'NOT_FOUND',
+    //     ], 404);
+    //   }
+    // });
+  
   })->create();

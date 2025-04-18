@@ -1,24 +1,5 @@
 <?php
 
-use App\Http\Controllers\ExampleController;
-
-// Exemplo de rota sem agrupamento
-Route::get(
-  '/base-example',
-  [ExampleController::class, 'index']
-)
-  ->name('base-example.index');
-
-// Exemplo de rotas agrupadas (recomendado)
-Route::prefix('group-example')->name('group-example.')->group(function () {
-
-  Route::get('/', [ExampleController::class, 'welcome'])->name('welcome');
-  Route::get('/list', [ExampleController::class, 'list'])->name('list');
-
-});
-Route::get('/exemplo', [ExampleController::class, 'test'])->name('test');
-
-
 Route::middleware('auth:sanctum')->get('/protected', function (Request $request) {
   return response()->json([
     'message' => 'This is a protected route.',
@@ -38,3 +19,5 @@ require __DIR__ . '/app/messages.php';
 require __DIR__ . '/app/queues.php';
 
 require __DIR__ . '/app/devices.php';
+
+require __DIR__ . '/app/commands.php';
