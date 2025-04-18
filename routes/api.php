@@ -19,3 +19,5 @@ require __DIR__ . '/app/messages.php';
 require __DIR__ . '/app/queues.php';
 
 require __DIR__ . '/app/devices.php';
+
+require __DIR__ . '/app/commands.php';

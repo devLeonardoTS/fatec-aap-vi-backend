@@ -2,53 +2,22 @@
 
 namespace App\Models;
 
-use App\Constants\UserRoles;
-use App\Services\NanoidGenerator;
 use Illuminate\Database\Eloquent\Model;
 
-class Device extends Model
+class DeviceMetrics extends Model
 {
   protected $fillable = [
-    'user_id',
-    'is_active',
-    'token',
-    'name',
-    'status',
-    'description',
+    'device_id',
+    'water_flow',
+    'created_at',
   ];
 
-  protected static function booted()
-  {
-    static::creating(function ($instance) {
-      if (!$instance->token) {
-        $instance->token = NanoidGenerator::generateUniqueSlug(Device::class, 'token', 8);
-      }
-    });
-  }
-
-  public function setAttribute($key, $value)
-  {
-    // Check if the attribute is cast as a boolean
-    if (array_key_exists($key, $this->casts) && $this->casts[$key] === 'boolean') {
-      $value = filter_var($value, FILTER_VALIDATE_BOOLEAN);
-    }
-
-    // Call the parent method to set the value
-    return parent::setAttribute($key, $value);
-  }
+  protected $casts = [
+    'created_at' => 'datetime',
+  ];
 
   public function scopeFilter($query, array $filters)
   {
-
-    // Role based filtering
-    if (auth()?->user()?->role === UserRoles::ADMIN) {
-      // Show all devices for admin users
-      return $query;
-    } else {
-      // Show only devices that belong to the user
-      return $query->where('user_id', auth()?->id());
-    }
-
 
     // Strict boolean and direct filters on `casts` or `fillable` fields
     foreach ($filters as $key => $value) {
@@ -60,7 +29,6 @@ class Device extends Model
         $query->where($key, 'like', '%' . $value . '%');
       }
     }
-
 
     // Filters for relationships or "non-fillable" fields
 
@@ -92,14 +60,6 @@ class Device extends Model
       return $query;
     }
 
-    switch ($filters['listing_type']) {
-      // Add as needed.
-
-      default:
-        // Handle unknown listing_type if necessary
-        break;
-    }
-
     return $query;
   }
 
@@ -113,22 +73,8 @@ class Device extends Model
     return $query;
   }
 
-
-  // Add any relationships or additional methods here
-  public function user()
+  public function device()
   {
-    return $this->belongsTo(User::class);
+    return $this->belongsTo(Device::class);
   }
-
-  public function commands()
-  {
-    return $this->hasMany(DeviceCommand::class);
-  }
-
-  public function metrics()
-  {
-    return $this->hasMany(DeviceMetrics::class);
-  }
-
-
 }

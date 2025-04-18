@@ -72,10 +72,30 @@ return new class extends Migration {
 
       $table->string('name')->nullable();
       $table->string('description')->nullable();
+      $table->string('status')->default('Aberto'); // Aberto, Fechado
 
       $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
 
       $table->timestamps();
+    });
+
+    Schema::create('device_commands', function (Blueprint $table) {
+      $table->id();
+      $table->string('command');
+      $table->timestamp('executed_at')->nullable();
+      $table->timestamps();
+
+      $table->foreignId('device_id')->constrained()->onDelete('cascade');
+
+    });
+
+    Schema::create('device_metrics', function (Blueprint $table) {
+      $table->id();
+      $table->string('water_flow');
+      $table->timestamps();
+
+      $table->foreignId('device_id')->constrained()->onDelete('cascade');
+
     });
 
   }
@@ -90,6 +110,15 @@ return new class extends Migration {
     Schema::table('users', function (Blueprint $table) {
       $table->dropColumn('role');
     });
+    Schema::dropIfExists('marketing_leads');
+    Schema::dropIfExists('profiles');
+    Schema::dropIfExists('addresses');
+    Schema::dropIfExists('messages');
+    Schema::dropIfExists('commands');
+    Schema::dropIfExists('devices');
+    Schema::dropIfExists('device_commands');
+    Schema::dropIfExists('device_metrics');
+
 
     Schema::enableForeignKeyConstraints();
   }
