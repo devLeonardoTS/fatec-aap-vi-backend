@@ -31,7 +31,7 @@ class UsersController extends Controller
     \DB::beginTransaction();
 
     try {
-      $user = User::factory()->create([
+      $user = User::create([
         'email' => $request->email,
         'password' => $request->password,
       ]);

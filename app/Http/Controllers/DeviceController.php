@@ -34,24 +34,12 @@ class DeviceController extends Controller
     $analytics = [];
 
     $analytics['total_devices'] = $request->user()->devices()->count();
-    $analytics['total_commands'] = $request->user()->devices_commands()->whereIn('command', ['open', 'close', 'verify'])->count();
-
-    $analytics['total_open_commands'] = $request->user()->devices_commands()->where('command', 'open')->count();
-    $analytics['total_close_commands'] = $request->user()->devices_commands()->where('command', 'close')->count();
-    $analytics['total_verify_commands'] = $request->user()->devices_commands()->where('command', 'verify')->count();
 
     $analytics['highest_water_flow_today'] = (float) $request->user()->devices_metrics()->whereBetween('device_metrics.created_at', [now()->startOfDay(), now()->endOfDay()])->max('water_flow');
-    $analytics['highest_water_flow_week'] = (float) $request->user()->devices_metrics()->whereBetween('device_metrics.created_at', [now()->startOfWeek(), now()->endOfWeek()])->max('water_flow');
-    $analytics['highest_water_flow_month'] = (float) $request->user()->devices_metrics()->whereBetween('device_metrics.created_at', [now()->startOfMonth(), now()->endOfMonth()])->max('water_flow');
-    $analytics['highest_water_flow_year'] = (float) $request->user()->devices_metrics()->whereBetween('device_metrics.created_at', [now()->startOfYear(), now()->endOfYear()])->max('water_flow');
 
-    $analytics['total_average_water_flow_hourly'] = $request->user()->devices_metrics()->whereBetween('device_metrics.created_at', [now()->subHour()->startOfDay(), now()->subHour()->endOfDay()])->average('water_flow');
+    $analytics['total_water_flow_today'] = $request->user()->devices_metrics()->whereBetween('device_metrics.created_at', [now()->startOfDay(), now()->endOfDay()])->sum('water_flow');
 
-    $analytics['total_average_water_flow_yesterday'] = $request->user()->devices_metrics()->whereBetween('device_metrics.created_at', [now()->subDay()->startOfDay(), now()->subDay()->endOfDay()])->average('water_flow');
-    $analytics['total_average_water_flow_today'] = $request->user()->devices_metrics()->whereBetween('device_metrics.created_at', [now()->startOfDay(), now()->endOfDay()])->average('water_flow');
-    $analytics['total_average_water_flow_week'] = $request->user()->devices_metrics()->whereBetween('device_metrics.created_at', [now()->startOfWeek(), now()->endOfWeek()])->average('water_flow');
-    $analytics['total_average_water_flow_month'] = $request->user()->devices_metrics()->whereBetween('device_metrics.created_at', [now()->startOfMonth(), now()->endOfMonth()])->average('water_flow');
-    $analytics['total_average_water_flow_year'] = $request->user()->devices_metrics()->whereBetween('device_metrics.created_at', [now()->startOfYear(), now()->endOfYear()])->average('water_flow');
+    $analytics['average_water_flow_last_hour'] = $request->user()->devices_metrics()->whereBetween('device_metrics.created_at', [now()->subHour()->startOfDay(), now()->subHour()->endOfDay()])->average('water_flow');
 
     $monthlyData = $request->user()->devices_metrics()
       ->whereYear('device_metrics.created_at', now()->year)
@@ -59,12 +47,12 @@ class DeviceController extends Controller
       ->groupBy(fn($metric) => $metric->created_at->format('F')) // Full month name
       ->map(fn($group) => [
         'month' => $group->first()->created_at->format('F'),
-        'flow' => round($group->avg('water_flow') / 60, 2),
+        'flow' => round($group->sum('water_flow') / 60, 2),
       ])
       ->values() // reset keys
       ->toArray();
 
-    $analytics['monthly_data'] = $monthlyData;
+    $analytics['monthly_average_water_flow_per_hour'] = $monthlyData;
 
     return response()->json([
       'data' => $analytics,
