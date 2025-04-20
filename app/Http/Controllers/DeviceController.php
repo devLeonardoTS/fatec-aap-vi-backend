@@ -204,10 +204,12 @@ class DeviceController extends Controller
   {
     $fields = $request->validate([
       'command' => 'required|string|in:open,close,verify',
+      'execute_after' => 'sometimes|date',
     ], [
       'command.required' => 'O campo commando é obrigatório.',
       'command.string' => 'O campo command deve ser uma string.',
       'command.in' => 'O campo command deve ser um dos seguintes valores: open, close, verify.',
+      'execute_after.date' => 'O campo execute_after deve ser uma data.',
     ]);
 
     $command = $device->commands()->create($fields);

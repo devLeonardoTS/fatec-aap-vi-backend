@@ -83,6 +83,7 @@ return new class extends Migration {
       $table->id();
       $table->string('command');
       $table->timestamp('executed_at')->nullable();
+      $table->timestamp('execute_after')->nullable();
       $table->timestamps();
 
       $table->foreignId('device_id')->constrained()->onDelete('cascade');

@@ -10,11 +10,13 @@ class DeviceCommand extends Model
     'device_id',
     'command',
     'executed_at',
+    'execute_after',
   ];
 
 
   protected $casts = [
     'executed_at' => 'datetime',
+    'execute_after' => 'datetime',
   ];
 
   public function scopeFilter($query, array $filters)
@@ -64,11 +66,17 @@ class DeviceCommand extends Model
 
     switch ($filters['listing_type']) {
       // Add as needed.
-      case "executed":
-        return $query->whereNotNull('executed_at');
+      case "basic_unexecuted":
+        return $query->whereNull('executed_at')->whereNull('execute_after');
 
-      case "unexecuted":
-        return $query->whereNull('executed_at');
+      case "basic_executed":
+        return $query->whereNotNull('executed_at')->whereNull('execute_after');
+
+      case "scheduled_unexecuted":
+        return $query->whereNull('executed_at')->whereNotNull('execute_after');
+
+      case "scheduled_executed":
+        return $query->whereNotNull('executed_at')->whereNotNull('execute_after');
 
       default:
         // Handle unknown listing_type if necessary
