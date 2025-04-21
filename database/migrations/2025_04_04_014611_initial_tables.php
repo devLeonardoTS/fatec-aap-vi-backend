@@ -92,7 +92,7 @@ return new class extends Migration {
 
     Schema::create('device_metrics', function (Blueprint $table) {
       $table->id();
-      $table->string('water_flow');
+      $table->decimal('water_flow', 10, 4);
       $table->timestamps();
 
       $table->foreignId('device_id')->constrained()->onDelete('cascade');

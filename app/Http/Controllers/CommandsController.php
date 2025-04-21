@@ -12,15 +12,19 @@ class CommandsController extends Controller
 
   public function executeCommand(DeviceCommand $command)
   {
+    $command->update(['executed_at' => now()]);
 
-    $command->executed_at = now();
-    $command->save();
-    $command->load('device');
-
-    return response()->json([
-      'data' => $command,
-      'message' => 'Comando executado com sucesso.',
+    $command->device->update([
+      'status' => match ($command->command) {
+        'open' => 'Aberto',
+        'close' => 'Fechado',
+        default => $command->device->status,
+      }
     ]);
 
+    return response()->json([
+      'data' => $command->load('device'),
+      'message' => 'Comando executado com sucesso.',
+    ]);
   }
 }

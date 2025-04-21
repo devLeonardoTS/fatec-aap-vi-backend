@@ -78,10 +78,11 @@ class User extends Authenticatable
     );
   }
 
+
   public function devices_metrics()
   {
     return $this->hasManyThrough(
-      DeviceMetrics::class,
+      DeviceMetric::class,
       Device::class,
       'user_id',         // Foreign key on Device table...
       'device_id',       // Foreign key on DeviceMetrics table...

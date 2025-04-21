@@ -17,6 +17,13 @@ class Device extends Model
     'description',
   ];
 
+  protected $searchable = [
+    'token',
+    'name',
+    'status',
+    'description',
+  ];
+
   protected static function booted()
   {
     static::creating(function ($instance) {
@@ -43,10 +50,9 @@ class Device extends Model
     // Role based filtering
     if (auth()?->user()?->role === UserRoles::ADMIN) {
       // Show all devices for admin users
-      return $query;
     } else {
       // Show only devices that belong to the user
-      return $query->where('user_id', auth()?->id());
+      $query->where('user_id', auth()?->id());
     }
 
 
@@ -64,22 +70,21 @@ class Device extends Model
 
     // Filters for relationships or "non-fillable" fields
 
-    // Filter by Mapping Type Name
-    $query->when(isset($filters['type']), function ($query) use ($filters) {
-      $query->whereHas('type', function ($query) use ($filters) {
-        $query->where('name', 'like', '%' . $filters['type'] . '%');
-      });
-    });
+    // Example: Filter by Type Name
+    // $query->when(isset($filters['type']), function ($query) use ($filters) {
+    //   $query->whereHas('type', function ($query) use ($filters) {
+    //     $query->where('name', 'like', '%' . $filters['type'] . '%');
+    //   });
+    // });
 
     // Handle global search across multiple fields and relationships
     $query->when(isset($filters['global']), function ($query) use ($filters) {
       $global = $filters['global'];
       $query->where(function ($query) use ($global) {
         // Search in fillable fields
-        foreach ($this->searchable as $field) {
+        foreach ($this->fillable as $field) {
           $query->orWhere($field, 'like', '%' . $global . '%');
         }
-
       });
     });
 
@@ -127,7 +132,7 @@ class Device extends Model
 
   public function metrics()
   {
-    return $this->hasMany(DeviceMetrics::class);
+    return $this->hasMany(DeviceMetric::class);
   }
 
 

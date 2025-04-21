@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class DeviceMetrics extends Model
+class DeviceMetric extends Model
 {
   protected $fillable = [
     'device_id',

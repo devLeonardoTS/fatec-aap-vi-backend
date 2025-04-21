@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Command;
+use App\Constants\UserRoles;
 use App\Models\Device;
-use App\Models\DeviceCommand;
+use App\Models\DeviceMetric;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -13,7 +13,7 @@ class DeviceController extends Controller
 
   public function getDevices(Request $request)
   {
-    $limit = $request->query('limit') ?? 5;
+    $limit = $request->query('limit') ?? 10;
 
     $query = $request->query->all();
     $filters = $query['filters'] ?? [];
@@ -21,9 +21,9 @@ class DeviceController extends Controller
     $direction = $query['direction'] ?? "desc";
 
     $resource = Device::filter($filters)
-      ->latest()
       ->filterListType($filters)
       ->sortBy($direction, $sortBy)
+      ->latest()
       ->paginate($limit);
 
     return response()->json($resource);
@@ -31,28 +31,40 @@ class DeviceController extends Controller
 
   public function getAnalytics(Request $request)
   {
-    $analytics = [];
+    $user = $request->user();
 
-    $analytics['total_devices'] = $request->user()->devices()->count();
+    // Get all device IDs for the authenticated user
+    $deviceIds = $user->devices()->pluck('id');
 
-    $analytics['highest_water_flow_today'] = (float) $request->user()->devices_metrics()->whereBetween('device_metrics.created_at', [now()->startOfDay(), now()->endOfDay()])->max('water_flow');
+    // Get metrics for today
+    $todayMetrics = DeviceMetric::whereIn('device_id', $deviceIds)
+      ->whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])
+      ->get();
 
-    $analytics['total_water_flow_today'] = $request->user()->devices_metrics()->whereBetween('device_metrics.created_at', [now()->startOfDay(), now()->endOfDay()])->sum('water_flow');
+    // Get metrics for last hour
+    $lastHourMetrics = DeviceMetric::whereIn('device_id', $deviceIds)
+      ->whereBetween('created_at', [now()->subHour(), now()])
+      ->get();
 
-    $analytics['average_water_flow_last_hour'] = $request->user()->devices_metrics()->whereBetween('device_metrics.created_at', [now()->subHour()->startOfDay(), now()->subHour()->endOfDay()])->average('water_flow');
+    $analytics = [
+      'total_devices' => $deviceIds->count(),
+      'total_water_flow_today' => $todayMetrics->sum(fn($m) => (float) $m->water_flow),
+      'average_water_flow_last_hour' => $lastHourMetrics->avg(fn($m) => (float) $m->water_flow),
+    ];
 
-    $monthlyData = $request->user()->devices_metrics()
-      ->whereYear('device_metrics.created_at', now()->year)
+    // Monthly aggregation
+    $monthlyData = DeviceMetric::whereIn('device_id', $deviceIds)
+      ->whereYear('created_at', now()->year)
       ->get()
-      ->groupBy(fn($metric) => $metric->created_at->format('F')) // Full month name
+      ->groupBy(fn($metric) => $metric->created_at->format('F'))
       ->map(fn($group) => [
         'month' => $group->first()->created_at->format('F'),
-        'flow' => round($group->sum('water_flow') / 60, 2),
+        'flow' => round($group->sum(fn($m) => (float) $m->water_flow), 2),
       ])
-      ->values() // reset keys
+      ->values()
       ->toArray();
 
-    $analytics['monthly_average_water_flow_per_hour'] = $monthlyData;
+    $analytics['monthly_flow_sum'] = $monthlyData;
 
     return response()->json([
       'data' => $analytics,
@@ -134,33 +146,59 @@ class DeviceController extends Controller
 
   public function showDeviceAnalytics(Request $request, Device $device)
   {
-    $analytics = [];
-    $analytics['total_commands'] = $device->commands()->whereIn('command', ['open', 'close', 'verify'])->count();
-    $analytics['total_open_commands'] = $device->commands()->where('command', 'open')->count();
-    $analytics['total_close_commands'] = $device->commands()->where('command', 'close')->count();
-    $analytics['total_verify_commands'] = $device->commands()->where('command', 'verify')->count();
-    $analytics['total_average_water_flow'] = $device->metrics()->whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->sum('average_water_flow');
+    $user = $request->user();
 
-    $analytics['highest_water_flow_today'] = $device->metrics()->whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->max('water_flow');
-    $analytics['highest_water_flow_week'] = $device->metrics()->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->max('water_flow');
-    $analytics['highest_water_flow_month'] = $device->metrics()->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->max('water_flow');
-    $analytics['highest_water_flow_year'] = $device->metrics()->whereBetween('created_at', [now()->startOfYear(), now()->endOfYear()])->max('water_flow');
+    // Get all device IDs for the authenticated user
+    $deviceId = $device->id;
 
-    $analytics['total_average_water_flow_today'] = $device->metrics()->whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->avg('average_water_flow');
-    $analytics['total_average_water_flow_week'] = $device->metrics()->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->sum('average_water_flow');
-    $analytics['total_average_water_flow_month'] = $device->metrics()->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->sum('average_water_flow');
-    $analytics['total_average_water_flow_year'] = $device->metrics()->whereBetween('created_at', [now()->startOfYear(), now()->endOfYear()])->sum('average_water_flow');
+    // Get latest metric for the device
+    $currentFlow = DeviceMetric::where('device_id', $deviceId)
+      ->latest()
+      ->first();
+
+    $startOfDayUtc = now('America/Sao_Paulo')->startOfDay()->timezone('UTC');
+    $endOfDayUtc = now('America/Sao_Paulo')->endOfDay()->timezone('UTC');
+
+    // Get metrics for today
+    $todayMetrics = DeviceMetric::where('device_id', $deviceId)
+      ->whereBetween('created_at', [$startOfDayUtc, $endOfDayUtc])
+      ->get();
+
+    // Get metrics for last hour
+    $lastHourMetrics = DeviceMetric::where('device_id', $deviceId)
+      ->whereBetween('created_at', [now()->subHour(), now()])
+      ->get();
+
+    $analytics = [
+      'device' => $device,
+      'current_flow' => $currentFlow,
+      'total_water_flow_today' => $todayMetrics->sum(fn($m) => (float) $m->water_flow),
+      'average_water_flow_last_hour' => $lastHourMetrics->avg(fn($m) => (float) $m->water_flow),
+    ];
+
+    // Monthly aggregation
+    $monthlyData = DeviceMetric::where('device_id', $deviceId)
+      ->whereYear('created_at', now()->year)
+      ->get()
+      ->groupBy(fn($metric) => $metric->created_at->format('F'))
+      ->map(fn($group) => [
+        'month' => $group->first()->created_at->format('F'),
+        'flow' => round($group->sum(fn($m) => (float) $m->water_flow), 2),
+      ])
+      ->values()
+      ->toArray();
+
+    $analytics['monthly_flow_sum'] = $monthlyData;
 
     return response()->json([
       'data' => $analytics,
       'message' => 'Análise realizada com sucesso.',
     ]);
-    // Implement device analytics logic here
   }
 
   public function showDeviceCommands(Request $request, Device $device)
   {
-    $limit = $request->query('limit') ?? 5;
+    $limit = $request->query('limit') ?? 10;
     $filters = $request->query('filters') ?? [];
     $sortBy = $request->query('sortBy') ?? [];
     $direction = $request->query('direction') ?? "desc";
@@ -181,7 +219,7 @@ class DeviceController extends Controller
 
   public function showDeviceMetrics(Request $request, Device $device)
   {
-    $limit = $request->query('limit') ?? 5;
+    $limit = $request->query('limit') ?? 10;
     $filters = $request->query('filters') ?? [];
     $sortBy = $request->query('sortBy') ?? [];
     $direction = $request->query('direction') ?? "desc";
@@ -213,14 +251,6 @@ class DeviceController extends Controller
     ]);
 
     $command = $device->commands()->create($fields);
-
-    if ($fields['command'] === 'open') {
-      $device->status = 'Aberto';
-    } elseif ($fields['command'] === 'close') {
-      $device->status = 'Fechado';
-    }
-
-    $device->save();
 
     return response()->json([
       'data' => $command,
@@ -277,12 +307,23 @@ class DeviceController extends Controller
 
   public function patchDevice(Request $request, Device $device)
   {
+    $user = $request->user();
+
+    // Check if the user is an admin or the owner of the resource
+    if ($user->role !== UserRoles::ADMIN && $user->id !== $device->user_id) {
+      return response()->json([
+        'message' => 'Você não tem permissão para atualizar este dispositivo.',
+      ], Response::HTTP_FORBIDDEN);
+    }
+
     $fields = $request->validate([
-      'name' => 'sometimes|string',
-      'description' => 'sometimes|string',
+      'name' => 'sometimes|string|max:255',
+      'description' => 'sometimes|string|max:255',
     ], [
       'name.string' => 'O campo nome deve ser uma string.',
-      'description.string' => 'O campo descri o deve ser uma string.',
+      'name.max' => 'O campo nome deve ter no máximo 255 caracteres.',
+      'description.string' => 'O campo descrição deve ser uma string.',
+      'description.max' => 'O campo descrição deve ter no máximo 255 caracteres.',
     ]);
 
     $device->update($fields);
@@ -291,7 +332,6 @@ class DeviceController extends Controller
       'data' => $device,
       'message' => 'Dispositivo atualizado com sucesso.',
     ]);
-    // Implement patch device logic here
   }
 
   public function destroyDeviceCommand(Request $request, Device $device, $command)
