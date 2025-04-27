@@ -31,3 +31,5 @@ require __DIR__ . '/app/queues.php';
 require __DIR__ . '/app/devices.php';
 
 require __DIR__ . '/app/commands.php';
+
+require __DIR__ . '/app/tickets.php';
