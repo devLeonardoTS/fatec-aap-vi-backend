@@ -99,6 +99,23 @@ return new class extends Migration {
 
     });
 
+    Schema::create('tickets', function (Blueprint $table) {
+      $table->id();
+      $table->string('title');
+      $table->string('status')->default('Aberto'); // Aberto, Fechado
+      $table->longText('description')->nullable();
+      $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
+      $table->timestamps();
+    });
+
+    Schema::create('comments', function (Blueprint $table) {
+      $table->id();
+      $table->longText('comment');
+      $table->morphs('commentable');
+      $table->foreignId('user_id')->constrained()->onDelete('cascade');
+      $table->timestamps();
+    });
+
   }
 
   /**
